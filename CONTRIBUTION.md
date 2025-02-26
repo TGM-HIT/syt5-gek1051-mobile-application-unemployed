@@ -20,7 +20,7 @@ Thank you for your interest in contributing! This document outlines the guidelin
 ##  Code Guidelines
 
 - Follow the existing code style.
-- Write meaningful commit messages.
+- Write meaningful [commit messages](https://wiki.openstack.org/wiki/GitCommitMessages#Examples_of_good_practice).
 - Keep pull requests small and focused.
 - Add comments where necessary.
 
