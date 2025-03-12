@@ -140,3 +140,91 @@ self.addEventListener('fetch', (event) => {
 - [x] Änderungen werden beim nächsten Online-Status automatisch synchronisiert.
 - [x] Die App bleibt durch Service Worker und IndexDB performant und zuverlässig.
 
+----
+
+# Test Protocol
+
+## Test Environment
+- **Browser:** Chrome / Firefox
+- **Database:** PouchDB (IndexedDB)
+- **Network:** Online & Offline mode
+- **DevTools:** IndexedDB Storage (`_pouch_shopping`)
+
+---
+
+## Test Cases
+
+### 1. Create and Retrieve Shopping List
+**Objective:** Ensure a new shopping list is stored and retrievable.
+
+| Step | Action | Expected Result | Status (✔/x) |
+|------|--------|----------------|---------------|
+| 1 | Open the shopping list app | App loads successfully | ✔ |
+| 2 | Create a new shopping list (e.g., "Supermarket") | List appears in UI | ✔ |
+| 3 | Open DevTools → Application → IndexedDB → `_pouch_shopping` | List is stored as `type: "list"` | ✔ |
+| 4 | Refresh the page | List persists after reload | ✔ |
+
+---
+
+### 2. Add Items to Shopping List
+**Objective:** Verify that items are linked to lists and persist locally.
+
+| Step | Action | Expected Result | Status (✔/x) |
+|------|--------|----------------|---------------|
+| 1 | Select an existing shopping list | List opens successfully |  |
+| 2 | Add an item (e.g., "Milk") | Item appears under the list |  |
+| 3 | Open DevTools → IndexedDB → `_pouch_shopping` | `type: "item"` exists with correct `list` ID |  |
+| 4 | Refresh the page | Items remain linked to the list |  |
+
+---
+
+### 3. Offline Mode: Editing and Retrieval
+**Objective:** Ensure the user can edit lists while offline.
+
+| Step | Action | Expected Result | Status (✔/x) |
+|------|--------|----------------|---------------|
+| 1 | Go to DevTools → Network → Set to **Offline** | App runs without crashing |  |
+| 2 | Add a new list (e.g., "Offline Test") | List appears in UI |  |
+| 3 | Add items while offline | Items appear in UI |  |
+| 4 | Close and reopen the app | List and items persist |  |
+
+---
+
+### 4. Syncing Changes When Online
+**Objective:** Offline changes should sync when reconnecting.
+
+| Step | Action | Expected Result | Status (✔/x) |
+|------|--------|----------------|---------------|
+| 1 | Ensure the app is **online** and syncing with CouchDB | Sync is active |  |
+| 2 | Go offline and edit a list (rename, add items) | Changes are stored locally |  |
+| 3 | Go online again | Changes sync to CouchDB |  |
+| 4 | Check CouchDB database | Updated lists and items appear |  |
+
+---
+
+## Debugging Notes
+| Issue | Possible Cause | Solution |
+|-------|---------------|----------|
+| List disappears after refresh | `db.put()` not storing properly | Check `saveList()` function |
+| Items not linked to list | `list` field missing in item | Ensure `listId` is passed |
+| Syncing not working | `db.sync()` misconfigured | Verify CouchDB URL & CORS |
+
+---
+
+## **Test Summary**
+| Test Case | Status (✔/x) | Notes |
+|-----------|--------------|-------|
+| Create and Retrieve List |  |  |
+| Add Items to List |  |  |
+| Offline Mode |  |  |
+| Sync on Reconnect |  |  |
+
+🟢 **Pass Criteria:** All tests succeed without data loss.  
+🔴 **Fail Criteria:** Lists or items disappear, or sync does not work.
+
+---
+
+tested by Gioia Frolik (unemployed slave)
+- **Test Date:**  2025-03-12
+- **Version:** V1
+
