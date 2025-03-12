@@ -10,10 +10,10 @@ Inspect: storage > Index DB > http://localhost:8081 > _pouch_shopping (default) 
 ![image](https://github.com/user-attachments/assets/b4feeea3-7560-4810-aed1-c485b4760dd4)
 
 ## Technologien
-Vue.js: Frontend-Framework für die Benutzeroberfläche
-PouchDB: Clientseitige Datenbank für die Offline-Speicherung
-Service Worker: Ermöglicht die Offline-Nutzung durch Caching der App-Resourcen
-(CouchDB: Synchronisierung mit einem Server, wenn eine Internetverbindung besteht)
+- Vue.js: Frontend-Framework für die Benutzeroberfläche
+- PouchDB: Clientseitige Datenbank für die Offline-Speicherung
+- Service Worker: Ermöglicht die Offline-Nutzung durch Caching der App-Resourcen
+- (CouchDB: Synchronisierung mit einem Server, wenn eine Internetverbindung besteht)
 
 ## Implementierung
 ### I Datenstruktur
