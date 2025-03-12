@@ -171,10 +171,10 @@ self.addEventListener('fetch', (event) => {
 
 | Step | Action | Expected Result | Status (✔/x) |
 |------|--------|----------------|---------------|
-| 1 | Select an existing shopping list | List opens successfully |  |
-| 2 | Add an item (e.g., "Milk") | Item appears under the list |  |
-| 3 | Open DevTools → IndexedDB → `_pouch_shopping` | `type: "item"` exists with correct `list` ID |  |
-| 4 | Refresh the page | Items remain linked to the list |  |
+| 1 | Select an existing shopping list | List opens successfully | ✔ |
+| 2 | Add an item (e.g., "Skyr") | Item appears under the list | ✔ |
+| 3 | Open DevTools → IndexedDB → `_pouch_shopping` | `type: "item"` exists with correct `list` ID | ✔ |
+| 4 | Refresh the page | Items remain linked to the list | ✔ |
 
 ---
 
@@ -183,10 +183,10 @@ self.addEventListener('fetch', (event) => {
 
 | Step | Action | Expected Result | Status (✔/x) |
 |------|--------|----------------|---------------|
-| 1 | Go to DevTools → Network → Set to **Offline** | App runs without crashing |  |
-| 2 | Add a new list (e.g., "Offline Test") | List appears in UI |  |
-| 3 | Add items while offline | Items appear in UI |  |
-| 4 | Close and reopen the app | List and items persist |  |
+| 1 | Go to DevTools → Network → Set to **Offline** | App runs without crashing | ✔ |
+| 2 | Add a new list (e.g., "Offline Test") | List appears in UI | ✔ |
+| 3 | Add items while offline | Items appear in UI | ✔ |
+| 4 | Close and reopen the app | List and items persist | ✔ |
 
 ---
 
