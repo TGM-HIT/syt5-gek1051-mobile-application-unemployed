@@ -1,6 +1,5 @@
 "use client"
 
-import { SearchIcon } from "lucide-react";
 import { Input } from "../ui/input";
 import * as React from "react"
 import { Moon, Sun } from "lucide-react"
@@ -22,6 +21,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import Link from "next/link";
 
 function ModeToggle() {
     const { setTheme } = useTheme()
@@ -47,22 +47,6 @@ function ModeToggle() {
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
-    )
-}
-
-function SearchFunction() {
-    return (
-        <div className="relative">
-            <div className="absolute left-1 top-1 h-1 w-1 text-muted-foreground">
-                <SearchIcon />
-            </div>
-            <Input
-                type="search"
-                placeholder="Search..."
-                className="w-full bg-background pl-8 pr-12 focus:outline-none focus:ring-1 focus:ring-primary md:w-[200px] lg:w-[300px]"
-            />
-        </div>
-
     )
 }
 
@@ -103,15 +87,14 @@ export function SyncDialog() {
 
 export function Header() {
     return (
-        <div className="flex flex-row place-content-between grow flex-wrap items-center p-2">
-            <h1 className="font-semibold italic">Unemployed Shopping</h1>
-            <div>
-                <SearchFunction />
-            </div>
-            <div className="flex flex-row space-x-2">
+        <div className="flex flex-row items-center p-4 w-full place-content-between">
+            <Link href={'/'}>
+                <h1 className="font-semibold italic text-lg">Unemployed Shopping List</h1>
+            </Link>
+            <div className="flex flex-row space-x-2 justify-self-end">
                 <SyncDialog />
                 <ModeToggle />
             </div>
         </div>
-    )
+    );
 }
