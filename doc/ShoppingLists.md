@@ -114,3 +114,67 @@ onClickList: function(id, title) {
 ```
 This function is called when the user wants to edit the contents of a shopping list. The mode is set to 'itemedit'. Vue's currentListId is set to this list's id field.
 
+### Test Environment
+
+- **Browser**: Chrome
+- **Database**: PouchDB (IndexedDB) with Cloudant Sync
+- **Network**: Online & Offline mode
+
+### Test Cases
+
+### 1. Create and Retrieve Multiple Shopping Lists
+
+**Objective:** Ensure users can create and retrieve multiple shopping lists with unique names.
+
+| Step | Action | Expected Result | Status (✓/x) |
+| --- | --- | --- | --- |
+| 1 | Open the shopping list app | App loads successfully |  |
+| 2 | Create multiple shopping lists with unique names | Each list appears in UI |  |
+| 3 | Open DevTools → Application → IndexedDB → _pouch_shopping | Lists are stored as type: "list" with unique names |  |
+| 4 | Refresh the page | Lists persist after reload |  |
+
+### 2. Add Location to Shopping List
+
+**Objective:** Verify location tagging functionality for different stores or purposes.
+
+| Step | Action | Expected Result | Status (✓/x) |
+| --- | --- | --- | --- |
+| 1 | Select an existing shopping list | List opens successfully |  |
+| 2 | Enter a place name and click 'Lookup' | OpenStreetMap API returns matching locations |  |
+| 3 | Select a suggested location from the dropdown | Location is added to the list |  |
+| 4 | Open DevTools → IndexedDB → _pouch_shopping | List object includes location data |  |
+| 5 | Refresh the page | Location data persists |  |
+
+### 3. Edit Shopping List
+
+**Objective:** Ensure users can rename lists, add notes, and modify details.
+
+| Step | Action | Expected Result | Status (✓/x) |
+| --- | --- | --- | --- |
+| 1 | Select an existing shopping list | List opens successfully |  |
+| 2 | Edit the list title | Title updates in UI |  |
+| 3 | Add a note to the list | Note is saved and displayed |  |
+| 4 | Change location | New location is stored |  |
+| 5 | Refresh the page | Changes persist |  |
+
+### 4. Delete Shopping List
+
+**Objective:** Ensure users can remove lists they no longer need.
+
+| Step | Action | Expected Result | Status (✓/x) |
+| --- | --- | --- | --- |
+| 1 | Select an existing shopping list | List opens successfully |  |
+| 2 | Click the delete button | List is removed from UI |  |
+| 3 | Open DevTools → IndexedDB → _pouch_shopping | List no longer exists in the database |  |
+| 4 | Refresh the page | List remains deleted |  |
+
+### 5. Switching Between Shopping Lists
+
+**Objective:** Ensure users can maintain separate lists for different stores or purposes and switch between them easily.
+
+| Step | Action | Expected Result | Status (✓/x) |
+| --- | --- | --- | --- |
+| 1 | Create multiple shopping lists | Lists appear in UI |  |
+| 2 | Select a different list from the UI | Selected list opens successfully |  |
+| 3 | Ensure changes made to one list do not affect others | Lists remain separate |  |
+| 4 | Refresh the page | Lists and their states persist |  |
