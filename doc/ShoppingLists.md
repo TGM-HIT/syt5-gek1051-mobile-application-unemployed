@@ -128,10 +128,10 @@ This function is called when the user wants to edit the contents of a shopping l
 
 | Step | Action | Expected Result | Status (✓/x) |
 | --- | --- | --- | --- |
-| 1 | Open the shopping list app | App loads successfully |  |
-| 2 | Create multiple shopping lists with unique names | Each list appears in UI |  |
-| 3 | Open DevTools → Application → IndexedDB → _pouch_shopping | Lists are stored as type: "list" with unique names |  |
-| 4 | Refresh the page | Lists persist after reload |  |
+| 1 | Open the shopping list app | App loads successfully | ✓ |
+| 2 | Create multiple shopping lists with unique names | Each list appears in UI | ✓ |
+| 3 | Open DevTools → Application → IndexedDB → _pouch_shopping | Lists are stored as type: "data" with each list having an own id | ✓ |
+| 4 | Refresh the page | Lists persist after reload | ✓ |
 
 ### 2. Add Location to Shopping List
 
@@ -139,23 +139,22 @@ This function is called when the user wants to edit the contents of a shopping l
 
 | Step | Action | Expected Result | Status (✓/x) |
 | --- | --- | --- | --- |
-| 1 | Select an existing shopping list | List opens successfully |  |
-| 2 | Enter a place name and click 'Lookup' | OpenStreetMap API returns matching locations |  |
-| 3 | Select a suggested location from the dropdown | Location is added to the list |  |
-| 4 | Open DevTools → IndexedDB → _pouch_shopping | List object includes location data |  |
-| 5 | Refresh the page | Location data persists |  |
+| 1 | Create a new Shopping List | Add shopping List form opens | ✓ |
+| 2 | Enter a place name and click 'Lookup' | OpenStreetMap API returns matching locations | ✓ |
+| 3 | Select a suggested location from the dropdown | Location is added to the list | ✓ |
+| 5 | Refresh the page | Location data persists | ✓ |
 
 ### 3. Edit Shopping List
 
-**Objective:** Ensure users can rename lists, add notes, and modify details.
+**Objective:** Ensure users can rename lists and modify details.
 
 | Step | Action | Expected Result | Status (✓/x) |
 | --- | --- | --- | --- |
-| 1 | Select an existing shopping list | List opens successfully |  |
-| 2 | Edit the list title | Title updates in UI |  |
-| 3 | Add a note to the list | Note is saved and displayed |  |
-| 4 | Change location | New location is stored |  |
-| 5 | Refresh the page | Changes persist |  |
+| 1 | Select Edit on an existing shopping list | Add shopping List form opens with the current data | ✓ |
+| 2 | Edit the list title | List title changes | ✓ |
+| 4 | Change location | Location changes  | ✓ |
+| 5 | Confirm the edits | Updated List is visible in UI | ✓ |
+| 5 | Refresh the page | Changes persist | ✓ |
 
 ### 4. Delete Shopping List
 
@@ -163,10 +162,9 @@ This function is called when the user wants to edit the contents of a shopping l
 
 | Step | Action | Expected Result | Status (✓/x) |
 | --- | --- | --- | --- |
-| 1 | Select an existing shopping list | List opens successfully |  |
-| 2 | Click the delete button | List is removed from UI |  |
-| 3 | Open DevTools → IndexedDB → _pouch_shopping | List no longer exists in the database |  |
-| 4 | Refresh the page | List remains deleted |  |
+| 1 | Hover over the three dots on any shopping | Delete and edit symbol appear | ✓ |
+| 2 | Click the delete button | List is removed from UI | ✓ |
+| 4 | Refresh the page | List remains deleted | ✓ |
 
 ### 5. Switching Between Shopping Lists
 
@@ -174,7 +172,7 @@ This function is called when the user wants to edit the contents of a shopping l
 
 | Step | Action | Expected Result | Status (✓/x) |
 | --- | --- | --- | --- |
-| 1 | Create multiple shopping lists | Lists appear in UI |  |
-| 2 | Select a different list from the UI | Selected list opens successfully |  |
-| 3 | Ensure changes made to one list do not affect others | Lists remain separate |  |
-| 4 | Refresh the page | Lists and their states persist |  |
+| 1 | Create multiple shopping lists | Lists appear in UI | ✓ |
+| 2 | Select a different list from the UI | Selected list opens successfully | ✓ |
+| 3 | Ensure changes made to one list do not affect others | Lists remain separate | ✓ |
+| 4 | Refresh the page | Lists remain unchanged  | ✓ |
