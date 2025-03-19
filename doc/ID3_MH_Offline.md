@@ -190,15 +190,44 @@ self.addEventListener('fetch', (event) => {
 
 ---
 
+```bash
+sudo pacman -S couchdb
+
+sudo nano /etc/couchdb/local.ini
+->
+[httpd]
+bind_address = 127.0.0.1
+
+[admins]
+admin = *******
+
+# start in background
+sudo systemctl enable couchdb
+sudo systemctl start couchdb
+# check status
+sudo systemctl status couchdb
+
+on http://localhost:8081/
+Sync URL: http://admin:*******@127.0.0.1:5984/shopping-list
+
+```
+
+
+! `Synch Error`!
+Auf http://127.0.0.1:5984/_utils/#_config -> CORS -> Enable CORS
+Restrict to: http://localhost:8081
+
+-> "`Synching`"
+
 ### 4. Syncing Changes When Online
 **Objective:** Offline changes should sync when reconnecting.
 
 | Step | Action | Expected Result | Status (✔/x) |
 |------|--------|----------------|---------------|
-| 1 | Ensure the app is **online** and syncing with CouchDB | Sync is active |  |
-| 2 | Go offline and edit a list (rename, add items) | Changes are stored locally |  |
-| 3 | Go online again | Changes sync to CouchDB |  |
-| 4 | Check CouchDB database | Updated lists and items appear |  |
+| 1 | Ensure the app is **online** and syncing with CouchDB | Sync is active | ✔ |
+| 2 | Go offline and edit a list (rename, add items) | Changes are stored locally | ✔ |
+| 3 | Go online again | Changes sync to CouchDB | ✔ | 
+| 4 | Check CouchDB database | Updated lists and items appear | ✔ |
 
 ---
 
@@ -214,10 +243,10 @@ self.addEventListener('fetch', (event) => {
 ## **Test Summary**
 | Test Case | Status (✔/x) | Notes |
 |-----------|--------------|-------|
-| Create and Retrieve List |  |  |
-| Add Items to List |  |  |
-| Offline Mode |  |  |
-| Sync on Reconnect |  |  |
+| Create and Retrieve List | ✔ |  |
+| Add Items to List | ✔ |  |
+| Offline Mode | ✔ |  |
+| Sync on Reconnect | ✔ | alles auf 127.0.0.1 also alles gesynct |
 
 🟢 **Pass Criteria:** All tests succeed without data loss.  
 🔴 **Fail Criteria:** Lists or items disappear, or sync does not work.
@@ -225,6 +254,6 @@ self.addEventListener('fetch', (event) => {
 ---
 
 tested by Gioia Frolik (unemployed slave)
-- **Test Date:**  2025-03-12
-- **Version:** V1
+- **Test Date:**  2025-03-19
+- **Version:** V2
 
