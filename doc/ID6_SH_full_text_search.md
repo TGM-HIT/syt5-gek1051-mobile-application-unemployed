@@ -48,7 +48,28 @@ const filteredLists = shoppingLists.filter((list) =>
     list.name.toLowerCase().includes(searchTerm.toLowerCase())
 );
 ```
----
 
 ## Technologie  
 Die Implementierung basiert auf Next.js (React) und ersetzt die vorherige Vue2-Lösung.
+
+
+## Testprotokoll
+**Ziel:** Überprüfung der Filterfunktion für Einkaufslisten und Artikel.
+
+**Testumgebung:**  
+Next.js App, lokale Entwicklung
+
+**Testfälle:**
+
+| Testfall | Eingabe             | Erwartetes Ergebnis                            |
+|----------|---------------------|-------------------------------------------------|
+| 1        | `Groceries`         | Liste "Groceries" wird angezeigt               |
+| 2        | `tronics`           | Liste "Electronics" wird angezeigt             |
+| 3        | `xyz`               | Keine Liste wird angezeigt                     |
+
+**Ergebnis:**  
+Alle Tests erfolgreich bestanden. Filterung reagiert dynamisch auf Eingaben.
+
+TO DO: 
+- [ ] Artikelsuche Testen
+
