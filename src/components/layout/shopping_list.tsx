@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'; // Assuming 'cn' is imported from shadcn's utils for conditional classnames
+import { cn } from '@/lib/utils';
 import { Ellipsis, PlusIcon } from 'lucide-react';
 import {
     DropdownMenu,
@@ -21,47 +21,177 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useState } from 'react';
+import { Address as AddressDetails, List } from "@/types/shoppinglist"
+import { generatePdf } from '@/lib/pdf';
+import { addList, deleteList, updateList } from '@/lib/sync';
 
+export function ShoppingListButton({ list }: { list: List }) {
+    const [showInfo, setShowInfo] = useState(false);
+    const [editField, setEditField] = useState('');
+    const [editValue, setEditValue] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
+    const [showDelete, setShowDelete] = useState(false);
 
-export function ShoppingListButton({ id, name, itemsChecked }: { id: number, name: string, itemsChecked: string }) {
     return (
         <div
             className={cn(
-                'relative popover-bg p-4 border-2 border rounded-lg shadow-md transition-all duration-300',
-                'hover:scale-105 hover:bg-accent h-40 w-40'
+                'relative bg-popover p-4 border-2 border rounded-lg shadow-md transition-all duration-300',
+                'hover:scale-105 hover:bg-accent h-40 w-40 overflow-y-scroll'
             )}
         >
             <div className="flex flex-col space-y-2">
                 <div className='flex flex-row'>
-                    <h2 className="font-semibold text-lg overflow-hidden text-ellipsis justify-self-left grow">{name}</h2>
+                    <h2 className="font-semibold text-lg overflow-hidden text-ellipsis justify-self-left grow">{list.name || <i>No name</i>}</h2>
                     <DropdownMenu>
                         <DropdownMenuTrigger>
                             <Ellipsis className='text-muted-foreground hover:text-foreground transition-all duration-300' />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                            <DropdownMenuLabel>Manage {name}</DropdownMenuLabel>
+                            <DropdownMenuLabel>Manage {list.name}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>Edit name</DropdownMenuItem>
-                            <DropdownMenuItem>Edit description</DropdownMenuItem>
-                            <DropdownMenuItem>Export PDF</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setShowInfo(true)}>Display info</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setIsEditing(true); setEditField('name'); setEditValue(list.name); }}>Edit name</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setIsEditing(true); setEditField('description'); setEditValue(list.description); }}>Edit description</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => generatePdf(list)}>Export PDF</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setShowDelete(true)}>Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-
-                <Link href={`/list/${id}`}>
-                    <p className="text-sm text-muted-foreground overflow-hidden text-ellipsis">{"This is a todo list"}</p>
+                <Link href={`/list/${list._id}`}>
+                    <p className="text-sm text-muted-foreground overflow-hidden text-ellipsis">{list.description || <i>No description</i>}</p>
                     <div className="text-xs text-muted-foreground italic">
-                        <span>{itemsChecked} items checked</span>
+                        <span>{Object.keys(list.entries).filter(e => list.entries[e].checked).length} / {Object.keys(list.entries).length} items checked</span>
                     </div>
                 </Link>
             </div>
+
+            <Dialog open={showInfo} onOpenChange={setShowInfo}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Shopping List Info</DialogTitle>
+                    </DialogHeader>
+                    <DialogDescription>
+                        <strong>Name:</strong> {list.name} <br />
+                        <strong>Description:</strong> {list.description} <br />
+                        <strong>Address:</strong> {list.address.street}, {list.address.city}, {list.address.country}, {list.address.postcode}
+                    </DialogDescription>
+                    <DialogFooter>
+                        <Button onClick={() => setShowInfo(false)}>Close</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={showDelete} onOpenChange={setShowDelete}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Are you sure?</DialogTitle>
+                    </DialogHeader>
+                    <DialogDescription>
+                        This action will permanently delete your shopping list,
+                    </DialogDescription>
+                    <DialogFooter>
+                        <Button variant={'outline'} onClick={() => setShowDelete(false)}>Cancel</Button>
+                        <Button onClick={async () => { await deleteList(list._id) }}>Delete</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+
+            <Dialog open={isEditing} onOpenChange={setIsEditing}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit {editField}</DialogTitle>
+                    </DialogHeader>
+                    <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} />
+                    <DialogFooter>
+                        <Button onClick={() => {
+                            setIsEditing(false);
+                            updateList({ ...list, [`${editField}`]: editValue })
+                        }}>Save</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
 
+interface Address {
+    label: string;
+    value: string;
+    details: AddressDetails
+}
+
 export function NewShoppingListButton() {
+    const [dialogOpen, setDialogOpen] = useState(false)
+
+    const [name, setName] = useState<string>('');
+    const [description, setDescription] = useState<string>('');
+    const [addressQuery, setAddressQuery] = useState<string>('');
+    const [country, setCountry] = useState<string>('');
+    const [city, setCity] = useState<string>('');
+    const [street, setStreet] = useState<string>('');
+    const [postcode, setPostcode] = useState<string>('');
+    const [suggestions, setSuggestions] = useState<Address[]>([]);
+    const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+
+    const fetchAddressSuggestions = async () => {
+        let query = addressQuery;
+        if (country) query += `, ${country}`;
+        if (city) query += `, ${city}`;
+        if (street) query += `, ${street}`;
+        if (postcode) query += `, ${postcode}`;
+
+        if (!query) {
+            setSuggestions([]);
+            return;
+        }
+
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&extratags=1`
+        );
+        const data = await response.json();
+        setSuggestions(data.map((item: typeof data) => ({
+            label: item.display_name,
+            value: item.display_name,
+            details: {
+                country: item.address.country,
+                city: item.address.city || item.address.town || item.address.village,
+                street: item.address.road,
+                postcode: item.address.postcode,
+            }
+        })));
+    };
+
+    const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setAddressQuery(e.target.value);
+        if (timeoutId) clearTimeout(timeoutId);
+        const newTimeoutId = setTimeout(fetchAddressSuggestions, 1000);
+        setTimeoutId(newTimeoutId);
+    };
+
+    const handleAddressSelect = (address: Address) => {
+        setCountry(address.details.country || '');
+        setCity(address.details.city || '');
+        setStreet(address.details.street || '');
+        setPostcode(address.details.postcode || '');
+        setAddressQuery(address.value);
+        setSuggestions([]);
+    };
+
+    const clearFields = () => {
+        setName('');
+        setDescription('');
+        setCountry('');
+        setCity('');
+        setStreet('');
+        setPostcode('');
+        setAddressQuery('');
+        setSuggestions([]);
+    };
+
     return (
-        <Dialog>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
                 <div
                     className={cn(
@@ -72,29 +202,47 @@ export function NewShoppingListButton() {
                     <PlusIcon size={'auto'} className='text-muted-foreground hover:text-foreground transition-all duration-300' />
                 </div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[40em] sm:max-h-[30em] overflow-y-scroll">
                 <DialogHeader>
                     <DialogTitle>Add a new shopping list</DialogTitle>
                     <DialogDescription>
-                        Enter your shopping list name and description
+                        Enter your shopping list name, description, and optional address details
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="name" className="text-right">
-                            Name
-                        </Label>
-                        <Input id="name" placeholder="Groceries" className="col-span-3" />
+                    <Label htmlFor="name">Name</Label>
+                    <Input id="name" placeholder="Groceries" required value={name} onChange={(e) => setName(e.target.value)} />
+                    <Label htmlFor="description">Description</Label>
+                    <Input id="description" placeholder='Foods with a load of protein' required value={description} onChange={(e) => setDescription(e.target.value)} />
+                    <Label htmlFor="addressQuery">Search Address</Label>
+                    <div className="relative">
+                        <Input id="addressQuery" placeholder="Search Address" value={addressQuery} onChange={handleQueryChange} />
+                        {suggestions.length > 0 && (
+                            <ul className="absolute bg-popover text-foreground border w-full mt-1 rounded-md shadow-md max-h-40 overflow-auto z-10">
+                                {suggestions.map((s, index) => (
+                                    <li key={index} className="p-2 hover:bg-secondary cursor-pointer" onClick={() => handleAddressSelect(s)}>
+                                        {s.label}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="description" className="text-right">
-                            Description
-                        </Label>
-                        <Input id="description" placeholder='Foods with a load of protein' className="col-span-3" />
-                    </div>
+                    <Label htmlFor="country">Country</Label>
+                    <Input id="country" placeholder="Austria" value={country} onChange={(e) => setCountry(e.target.value)} />
+                    <Label htmlFor="city">City</Label>
+                    <Input id="city" placeholder="Vienna" value={city} onChange={(e) => setCity(e.target.value)} />
+                    <Label htmlFor="street">Street Address</Label>
+                    <Input id="street" placeholder="Wexstraße 29" value={street} onChange={(e) => setStreet(e.target.value)} />
+                    <Label htmlFor="postcode">Postal Code</Label>
+                    <Input id="postcode" placeholder="1200" value={postcode} onChange={(e) => setPostcode(e.target.value)} />
                 </div>
-                <DialogFooter>
-                    <Button type="submit">Add</Button>
+                <DialogFooter className='flex flex-row grow'>
+                    <Button onClick={clearFields} variant={'outline'}>Clear</Button>
+                    <Button type="submit" onClick={(event) => {
+                        event.preventDefault()
+                        addList(name, description, { country, city, street, postcode })
+                        setDialogOpen(false)
+                    }}>Add</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

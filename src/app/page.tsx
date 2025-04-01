@@ -1,17 +1,37 @@
-"use client"
+"use client";
 
+import { useEffect, useState } from "react";
 import { NewShoppingListButton, ShoppingListButton } from "@/components/layout/shopping_list";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { getLists, listenForChanges } from "@/lib/sync";
+import { List } from "@/types/shoppinglist";
 
 export default function ShoppingList() {
     const [searchTerm, setSearchTerm] = useState<string>("");
-    const shoppingLists = [
-        { id: 1, name: 'Groceries', itemsChecked: '12 / 14' },
-        { id: 2, name: 'Electronics', itemsChecked: '3 / 5' },
-        { id: 3, name: 'Books', itemsChecked: '8 / 10' },
-        { id: 4, name: 'Furniture', itemsChecked: '1 / 4' },
-    ];
+    const [shoppingLists, setShoppingLists] = useState<List[]>([]);
+
+    useEffect(() => {
+        function fetchLists() {
+            getLists().then((e) => setShoppingLists(e))
+        }
+        fetchLists();
+        listenForChanges((updatedDoc) => {
+            setShoppingLists(prevLists => {
+                if (updatedDoc._deleted) {
+                    return prevLists.filter(list => list._id !== updatedDoc._id);
+                }
+
+                const index = prevLists.findIndex(list => list._id === updatedDoc._id);
+                if (index > -1) {
+                    const updatedLists = [...prevLists];
+                    updatedLists[index] = updatedDoc;
+                    return updatedLists;
+                } else {
+                    return [...prevLists, updatedDoc];
+                }
+            });
+        });
+    }, [setShoppingLists]);
 
     const filteredLists = shoppingLists.filter((list) =>
         list.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -26,18 +46,17 @@ export default function ShoppingList() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
-            
-            <div className='flex flex-row flex-wrap space-x-4 space-y-4 p-4'>
+
+            <div className="flex flex-row flex-wrap space-x-4 space-y-4 p-4">
                 {filteredLists.map((list) => (
-                    <ShoppingListButton 
-                        key={list.id}
-                        id={list.id}
-                        name={list.name}
-                        itemsChecked={list.itemsChecked}
-                    />
+                    <div key={list._id} className="flex items-center space-x-2">
+                        <ShoppingListButton
+                            list={list} />
+                    </div>
                 ))}
                 <NewShoppingListButton />
             </div>
         </div>
     );
 }
+
