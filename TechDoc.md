@@ -64,7 +64,7 @@ To see this app in action without installing anything, simply visit [https://ibm
 
 # **Development Environment Setup**  
 
-## ** Development Tools**  
+## **Development Tools**  
 ### **Integrated Development Environment (IDE)**  
 The project was developed using **Visual Studio Code (VS Code)**. This IDE was chosen for its extensive support for JavaScript, React, and Jest, as well as its built-in Git integration and debugging tools.  
 
