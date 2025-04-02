@@ -331,6 +331,9 @@ git clone https://github.com/your-org/shopping-list-next
 cd shopping-list-next
 npm install
 
+## Create Coubbase Cluster
+https://docs.couchbase.com/server/current/manage/manage-nodes/create-cluster.html
+
 
 ## Run dev server
 
