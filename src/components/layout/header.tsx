@@ -1,17 +1,17 @@
 "use client"
 
 import { Input } from "../ui/input";
-import * as React from "react"
+import * as React from "react";
 import { useState } from "react";
-import { Moon, Sun } from "lucide-react"
-import { useTheme } from "next-themes"
-import { Button } from "@/components/ui/button"
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
     Dialog,
     DialogContent,
@@ -20,14 +20,18 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { syncDatabase } from "@/lib/db";
 
+// Lazy load syncDatabase function
+const syncDatabase = async (url: string, credentials: { username: string; password: string }) => {
+    const { syncDatabase } = await import("@/lib/db");
+    return syncDatabase(url, credentials);
+};
 
 function ModeToggle() {
-    const { setTheme } = useTheme()
+    const { setTheme } = useTheme();
 
     return (
         <DropdownMenu>
@@ -39,33 +43,33 @@ function ModeToggle() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setTheme("light")}>
-                    Light
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")}>
-                    Dark
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("system")}>
-                    System
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("light")}>Light</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("dark")}>Dark</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("system")}>System</DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
-    )
+    );
 }
 
 export function SyncDialog() {
     const [url, setUrl] = useState("");
     const [password, setPassword] = useState("");
-    const [buttonVariant, setButtonVariant] = useState<"default" | "outline" | "destructive">("default");
+    const [buttonVariant, setButtonVariant] = useState<"default" | "outline" | "destructive">("outline");
 
     const handleSync = async () => {
-        await syncDatabase(url, { username: "admin", password }).then(() => setButtonVariant("default")).catch(() => setButtonVariant("destructive"));
+        try {
+            // Dynamically load the syncDatabase function and call it
+            await syncDatabase(url, { username: "admin", password });
+            setButtonVariant("default");
+        } catch (error) {
+            setButtonVariant("destructive");
+        }
     };
 
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="outline">Sync</Button>
+                <Button variant={buttonVariant}>Sync</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
@@ -79,17 +83,29 @@ export function SyncDialog() {
                         <Label htmlFor="url" className="text-right">
                             URL
                         </Label>
-                        <Input id="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="http://localhost:1234/db" className="col-span-3" />
+                        <Input
+                            id="url"
+                            value={url}
+                            onChange={(e) => setUrl(e.target.value)}
+                            placeholder="http://localhost:1234/db"
+                            className="col-span-3"
+                        />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="password" className="text-right">
                             Password
                         </Label>
-                        <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="col-span-3" />
+                        <Input
+                            id="password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="col-span-3"
+                        />
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleSync} variant={buttonVariant}>Synchronize</Button>
+                    <Button onClick={handleSync}>Synchronize</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -99,7 +115,7 @@ export function SyncDialog() {
 export function Header() {
     return (
         <div className="flex flex-row items-center p-4 w-full place-content-between">
-            <Link href={'/'}>
+            <Link href={"/"}>
                 <h1 className="font-semibold italic text-lg">Unemployed Shopping List</h1>
             </Link>
             <div className="flex flex-row space-x-2 justify-self-end">
@@ -109,3 +125,4 @@ export function Header() {
         </div>
     );
 }
+

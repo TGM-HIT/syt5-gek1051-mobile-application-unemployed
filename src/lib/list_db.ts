@@ -1,6 +1,6 @@
 "use client"
 
-import { Address, BaseType, List, ListEntry } from '@/types/shoppinglist';
+import { BaseType, List, ListEntry } from '@/types/shoppinglist';
 import { localDB } from './db';
 
 export async function getLists(): Promise<List[]> {
@@ -35,20 +35,10 @@ export async function getList(listId: string): Promise<List | null> {
     }
 }
 
-export async function addList(name: string,
-    description: string,
-    address: Address,
-    isTemplate: boolean = false
+export async function addList(list: List
 ): Promise<void> {
     try {
-        await localDB.put({
-            _id: crypto.randomUUID(),
-            type: isTemplate ? 'template' : 'list',
-            name,
-            description,
-            address,
-            entries: {}
-        });
+        await localDB.put(list);
     } catch (error) {
         console.error('Error adding list:', error);
     }

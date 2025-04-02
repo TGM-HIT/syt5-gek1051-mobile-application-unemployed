@@ -1,5 +1,6 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { v4: uuidv4 } = require('uuid');
+"use client"
+
+import { v4 as uuidv4 } from 'uuid';
 import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"

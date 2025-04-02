@@ -1,3 +1,6 @@
+"use client"
+
+import { v4 as uuidv4 } from 'uuid';
 import { cn } from '@/lib/utils';
 import { Ellipsis, PlusIcon } from 'lucide-react';
 import {
@@ -245,11 +248,19 @@ export function NewShoppingListButton() {
                     <Button onClick={clearFields} variant={'outline'}>Clear</Button>
                     <Button type="submit" onClick={(event) => {
                         event.preventDefault()
-                        addList(name, description, { country, city, street, postcode }, isTemplate)
+                        addList(
+                            {
+                                _id: uuidv4(),
+                                type: isTemplate ? 'template' : 'list',
+                                name,
+                                description,
+                                address: { country, city, street, postcode },
+                                entries: {}
+                            })
                         setDialogOpen(false)
                     }}>Add</Button>
                 </DialogFooter>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }
