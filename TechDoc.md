@@ -210,22 +210,25 @@ Jest is a JavaScript testing framework designed for simplicity and efficiency. I
 - Unit tests validate key functions and logic to prevent regressions.  
 
 **Official Documentation:**  
-- [Jest Official Documentation](https://jestjs.io/docs/getting-started)  
+- [Jest Official Documentation](https://jestjs.io/docs/getting-started)
 
-# **Datastore**  
 
-The datastore consists of two main schemas: the **Shopping List Schema** and the **List Item Schema**. These schemas define the structure for storing shopping lists and their corresponding items in a **document-based NoSQL database**.  
+# **Datastore and Data Synchronization**
 
-## **Data Storage and Synchronization**  
+The datastore is built on a **document-based NoSQL database** using **CouchDB**, which provides built-in synchronization and replication capabilities. This ensures that data remains consistent across multiple clients, even in distributed environments.
 
-The database uses a **soft deletion** strategy instead of permanently removing documents. When a shopping list or item is deleted, it is not erased from the database but instead marked with a `"deleted": true` flag. This ensures that:  
-- **Data integrity is maintained**, and deletions are properly synchronized across all instances.  
-- **Deleted items are still available for historical reference** and can potentially be restored if necessary.  
-- **Replication mechanisms handle deletions** correctly without causing data inconsistencies.  
+## **Data Storage and Synchronization**
 
-## **Shopping List Schema**  
+The database employs a **soft deletion strategy** instead of permanently removing documents. When a shopping list or an item is deleted, it is not erased from the database but instead marked with a `"deleted": true` flag. This strategy is used because:
 
-The **Shopping List Schema** represents a shopping list entity, including metadata and optional location details.  
+- **Data Integrity** – Ensures that all deletions are properly synchronized across instances.
+- **Historical Tracking** – Deleted items remain available for reference and can be restored if necessary.
+- **Replication Safety** – Prevents data inconsistencies that may arise during multi-master replication.
+- **Conflict Handling** – CouchDB’s conflict resolution mechanisms ensure that deleted records are propagated correctly without inconsistencies.
+
+## **Shopping List Schema**
+
+The Shopping List Schema represents a shopping list entity, including metadata and optional location details.
 
 ```json
 {
@@ -247,32 +250,16 @@ The **Shopping List Schema** represents a shopping list entity, including metada
 }
 ```
 
-### **Field Descriptions**  
-- **_id** *(string | auto-generated)* – Unique identifier for the shopping list.  
-- **type** *(fixed: 'list')* – Identifies the document type.  
-- **version** *(integer | starts at 1)* – Tracks versioning of the document.  
-- **title** *(string | required)* – Name of the shopping list.  
-- **checked** *(boolean | default false)* – Indicates whether the list has been checked off.  
-- **place** *(object | optional)* – Location-related details:  
-  - **title** *(string)* – Name of the location.  
-  - **license** *(string | null)* – License information, null if user-entered.  
-  - **lat, lon** *(number | null)* – Geolocation coordinates.  
-  - **address** *(object)* – Structured address data.  
-- **createdAt** *(ISO8601 string)* – Timestamp when the list was created.  
-- **updatedAt** *(ISO8601 string)* – Timestamp when the list was last updated.  
-- **deleted** *(boolean | default false)* – Indicates whether the list has been marked as deleted.  
+### **What Happens When a Shopping List is Deleted?**
+- The `deleted` field is set to `true`, marking it as removed.
+- The `updatedAt` timestamp is updated to reflect the deletion.
+- The document remains in the database for synchronization and consistency.
+- Queries can exclude `deleted: true` documents to prevent them from being displayed.
+- The list can be restored by setting `deleted` back to `false`.
 
-### **What Happens When a Shopping List is Deleted?**  
-1. The `"deleted"` field is set to `true`, marking it as removed.  
-2. The `"updatedAt"` timestamp is updated to reflect the deletion.  
-3. The document remains in the database to ensure consistency during **synchronization and replication**.  
-4. Queries can exclude `"deleted": true` documents to hide them from users.  
-5. If needed, the list can be restored by setting `"deleted"` back to `false`.  
+## **List Item Schema**
 
-
-## **List Item Schema**  
-
-The **List Item Schema** represents an individual item within a shopping list.  
+The List Item Schema represents an individual item within a shopping list.
 
 ```json
 {
@@ -291,52 +278,47 @@ The **List Item Schema** represents an individual item within a shopping list.
 }
 ```
 
-### **Field Descriptions**  
-- **_id** *(string | auto-generated)* – Unique identifier for the item.  
-- **type** *(fixed: 'item')* – Identifies the document type.  
-- **version** *(integer | starts at 1)* – Tracks versioning of the document.  
-- **title** *(string | required)* – Name of the item.  
-- **category** *(string | predefined values)* – Classification of the item (e.g., "Groceries", "Electronics").  
-- **pinned** *(string | priority level)* – Indicates item priority.  
-- **details** *(string | markdown supported)* – Additional details about the item.  
-- **person** *(string)* – Name of the person assigned to the item.  
-- **checked** *(boolean | default false)* – Indicates whether the item has been checked off.  
-- **createdAt** *(ISO8601 string)* – Timestamp when the item was created.  
-- **updatedAt** *(ISO8601 string)* – Timestamp when the item was last updated.  
-- **deleted** *(boolean | default false)* – Indicates whether the item has been marked as deleted.  
+### **What Happens When a List Item is Deleted?**
+- The `deleted` field is set to `true`.
+- The `updatedAt` timestamp is updated.
+- The document remains in the database to ensure consistency across replicas.
+- Queries exclude `deleted: true` items, so they do not appear in active lists.
+- Items can be restored by setting `deleted` to `false`.
 
-### **What Happens When a List Item is Deleted?**  
-1. The `"deleted"` field is set to `true`, preventing the item from appearing in regular queries.  
-2. The `"updatedAt"` timestamp is updated.  
-3. The document remains in the database for **data integrity and synchronization purposes**.  
-4. Queries can exclude `"deleted": true` items, so they are no longer visible in the app.  
-5. If needed, an item can be restored by resetting `"deleted"` to `false`.  
+## **Why Use Soft Deletion Instead of Hard Deletion?**
 
+- **Synchronization Integrity** – Ensures proper propagation of deletions across all replicas.
+- **Data Retention** – Prevents accidental data loss and allows recovery.
+- **Historical Tracking** – Maintains a history of deleted lists/items for auditing purposes.
+- **Performance Optimization** – Reduces potential conflicts and data inconsistencies in replicated environments.
 
-## **Why Soft Deletion Instead of Hard Deletion?**  
-- **Synchronization Integrity** – Ensures that deletions are properly propagated across all devices and database replicas.  
-- **Data Retention** – Avoids accidental data loss and allows for recovery if necessary.  
-- **Historical Tracking** – Maintains a history of deleted lists/items for auditing purposes.  
-- **Performance Optimization** – Prevents unnecessary document deletions that could disrupt references in the database.  
+## **Synchronization Algorithm and Framework**
 
-## **Related Documentation:**  
-- [CouchDB API Documentation](https://docs.couchdb.org/en/stable/api/index.html)  
-- [CouchDB Replication](https://docs.couchdb.org/en/stable/replication/index.html)  
-- [CouchDB Conflict Resolution](https://docs.couchdb.org/en/stable/replication/conflicts.html)  
+The datastore relies on **CouchDB’s multi-master replication model**, ensuring seamless data consistency across distributed systems. Key features include:
 
+### **Multi-Master Replication**
+- Any node can receive updates, and changes are propagated across all replicas.
+- Ensures that data remains available even if one instance goes offline.
 
+### **Optimistic Concurrency Control**
+- Each document maintains a **revision history**.
+- Changes are merged efficiently without locking mechanisms.
 
-# Sync Algorithm
+### **Conflict Resolution**
+- If conflicting changes occur, CouchDB stores all conflicting versions.
+- Application logic determines the correct version.
 
-The datastore uses CouchDB's multi-master replication algorithm to synchronize data across multiple nodes. This ensures that updates can be made on any replica, and conflicts are resolved using a revision-based approach.
+### **Incremental Updates**
+- Only changed documents are replicated.
+- Reduces bandwidth and improves performance.
 
-Key Features:
-* Multi-master replication: Any instance can receive updates, and changes are propagated across all replicas.
-* Optimistic concurrency control: Each document maintains a revision history to track changes.
-* Conflict resolution: If conflicting changes occur, CouchDB stores all conflicting versions and allows for resolution via application logic.
-* Incremental updates: Only changed documents are replicated, reducing bandwidth usage.
-* Offline-first support: Devices can sync when reconnected, ensuring data consistency.
-* This synchronization method allows seamless data consistency across distributed systems, making it ideal for collaborative shopping lists.
+### **Offline-First Support**
+- Devices can sync when reconnected, ensuring continuous data availability.
+
+## **Related Documentation:**
+- [CouchDB API Documentation](https://docs.couchdb.org/en/stable/api/index.html)
+- [CouchDB Replication](https://docs.couchdb.org/en/stable/replication/index.html)
+- [CouchDB Conflict Resolution](https://docs.couchdb.org/en/stable/replication/conflicts.html)
 
 
 # Development Setup
