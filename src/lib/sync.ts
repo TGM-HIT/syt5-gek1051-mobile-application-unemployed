@@ -1,6 +1,7 @@
 "use client"
 
 import { Address, BaseType, List, ShoppingListEntry } from '@/types/shoppinglist';
+
 import PouchDB from 'pouchdb-browser';
 
 export const localDB = new PouchDB('shopping_lists');
@@ -113,4 +114,3 @@ export function listenForChanges(updateUI: (data: any) => void) {
         updateUI(change.doc);
     }).on('error', (err) => console.error('Change Listener Error:', err));
 }
-

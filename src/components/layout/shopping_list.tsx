@@ -44,7 +44,7 @@ export function ShoppingListButton({ list }: { list: List }) {
                 <div className='flex flex-row'>
                     <h2 className="font-semibold text-lg overflow-hidden text-ellipsis justify-self-left grow">{list.name || <i>No name</i>}</h2>
                     <DropdownMenu>
-                        <DropdownMenuTrigger>
+                        <DropdownMenuTrigger data-testid="list-options">
                             <Ellipsis className='text-muted-foreground hover:text-foreground transition-all duration-300' />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
@@ -194,6 +194,7 @@ export function NewShoppingListButton() {
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
                 <div
+                    data-testid="new-list-button"
                     className={cn(
                         'relative popover-bg p-10 border-2 border rounded-lg shadow-md transition-all duration-300',
                         'hover:scale-105 hover:bg-accent h-40 w-40'
