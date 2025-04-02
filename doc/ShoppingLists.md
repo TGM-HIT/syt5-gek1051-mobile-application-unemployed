@@ -116,63 +116,138 @@ This function is called when the user wants to edit the contents of a shopping l
 
 ### Test Environment
 
+- ** Jest **
 - **Browser**: Chrome
 - **Database**: PouchDB (IndexedDB) with Cloudant Sync
 - **Network**: Online & Offline mode
 
-### Test Cases
+## Test Cases
 
-### 1. Create and Retrieve Multiple Shopping Lists
+### 1. Creating a New Shopping List
 
-**Objective:** Ensure users can create and retrieve multiple shopping lists with unique names.
+**Objective:** Verify that a user can successfully create a new shopping list and store it in IndexedDB.
 
-| Step | Action | Expected Result | Status (✓/x) |
-| --- | --- | --- | --- |
-| 1 | Open the shopping list app | App loads successfully | ✓ |
-| 2 | Create multiple shopping lists with unique names | Each list appears in UI | ✓ |
-| 3 | Open DevTools → Application → IndexedDB → _pouch_shopping | Lists are stored as type: "data" with each list having an own id | ✓ |
-| 4 | Refresh the page | Lists persist after reload | ✓ |
+```javascript
+test('Creates a new shopping list', async () => {
+  render(
+    <MemoryRouter>
+      <NewShoppingListButton />
+    </MemoryRouter>
+  );
 
-### 2. Add Location to Shopping List
+  // Open the "New List" form
+  await user.click(screen.getByTestId('new-list-button'));
 
-**Objective:** Verify location tagging functionality for different stores or purposes.
+  // Enter details
+  const nameInput = screen.getByLabelText('Name');
+  const descriptionInput = screen.getByLabelText('Description');
+  await user.type(nameInput, 'New List');
+  await user.type(descriptionInput, 'Fresh groceries');
 
-| Step | Action | Expected Result | Status (✓/x) |
-| --- | --- | --- | --- |
-| 1 | Create a new Shopping List | Add shopping List form opens | ✓ |
-| 2 | Enter a place name and click 'Lookup' | OpenStreetMap API returns matching locations | ✓ |
-| 3 | Select a suggested location from the dropdown | Location is added to the list | ✓ |
-| 5 | Refresh the page | Location data persists | ✓ |
+  // Submit form
+  await user.click(screen.getByText('Add'));
 
-### 3. Edit Shopping List
+  // Ensure addList function was called with correct parameters
+  await waitFor(() => {
+    expect(addList).toHaveBeenCalledWith(
+      'New List',
+      'Fresh groceries',
+      expect.any(Object)
+    );
+  });
+});
+```
 
-**Objective:** Ensure users can rename lists and modify details.
+### Editing an Existing Shopping List
+**Objective**: Ensure users can rename lists and modify details.
 
-| Step | Action | Expected Result | Status (✓/x) |
-| --- | --- | --- | --- |
-| 1 | Select Edit on an existing shopping list | Add shopping List form opens with the current data | ✓ |
-| 2 | Edit the list title | List title changes | ✓ |
-| 4 | Change location | Location changes  | ✓ |
-| 5 | Confirm the edits | Updated List is visible in UI | ✓ |
-| 5 | Refresh the page | Changes persist | ✓ |
+```javascript
+test('Renames a list and modifies details', async () => {
+  render(
+    <MemoryRouter>
+      <ShoppingListButton list={sampleList} />
+    </MemoryRouter>
+  );
 
-### 4. Delete Shopping List
+  // Open options dropdown
+  await user.click(screen.getByTestId('list-options'));
 
-**Objective:** Ensure users can remove lists they no longer need.
+  // Select "Edit name"
+  await user.click(screen.getByText('Edit name'));
 
-| Step | Action | Expected Result | Status (✓/x) |
-| --- | --- | --- | --- |
-| 1 | Hover over the three dots on any shopping | Delete and edit symbol appear | ✓ |
-| 2 | Click the delete button | List is removed from UI | ✓ |
-| 4 | Refresh the page | List remains deleted | ✓ |
+  // Update name
+  const input = screen.getByRole('textbox');
+  await user.clear(input);
+  await user.type(input, 'Updated Groceries');
 
-### 5. Switching Between Shopping Lists
+  // Save changes
+  await user.click(screen.getByText('Save'));
 
-**Objective:** Ensure users can maintain separate lists for different stores or purposes and switch between them easily.
+  // Verify that updateList is called with new data
+  await waitFor(() => {
+    expect(updateList).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Updated Groceries' })
+    );
+  });
+});
+```
+✅ Expected Result: The updated name should be visible in the UI and persist after refresh.
 
-| Step | Action | Expected Result | Status (✓/x) |
-| --- | --- | --- | --- |
-| 1 | Create multiple shopping lists | Lists appear in UI | ✓ |
-| 2 | Select a different list from the UI | Selected list opens successfully | ✓ |
-| 3 | Ensure changes made to one list do not affect others | Lists remain separate | ✓ |
-| 4 | Refresh the page | Lists remain unchanged  | ✓ |
+
+### Deleting a Shopping List
+**Objective**: Ensure users can delete unwanted lists.
+
+```javascript
+test('Deletes a list', async () => {
+  render(
+    <MemoryRouter>
+      <ShoppingListButton list={sampleList} />
+    </MemoryRouter>
+  );
+
+  // Open options dropdown
+  await user.click(screen.getByTestId('list-options'));
+
+  // Click "Delete"
+  await user.click(screen.getByText('Delete'));
+
+  // Confirm deletion
+  await user.click(screen.getByText('Delete'));
+
+  // Verify that deleteList was called with correct list ID
+  await waitFor(() => {
+    expect(deleteList).toHaveBeenCalledWith(sampleList._id);
+  });
+});
+```
+✅ Expected Result: The list should be removed from the UI and database.
+
+### Switching Between Shopping Lists
+**Objective**: Ensure users can navigate between multiple lists without data interference.
+
+```javascript
+test('Renders multiple lists for management and navigation', () => {
+  const secondList = {
+    ...sampleList,
+    _id: '2',
+    name: 'Hardware Store',
+    address: { country: 'AT', city: 'Vienna', street: 'Tool Rd', postcode: '1020' },
+  };
+
+  render(
+    <MemoryRouter>
+      <ShoppingListButton list={sampleList} />
+      <ShoppingListButton list={secondList} />
+    </MemoryRouter>
+  );
+
+  // Check that both lists appear
+  expect(screen.getByText('Groceries')).toBeInTheDocument();
+  expect(screen.getByText('Hardware Store')).toBeInTheDocument();
+
+  // Verify that each list has a link
+  const links = screen.getAllByRole('link');
+  expect(links.length).toBe(2);
+});
+```
+✅ Expected Result: Users should see multiple lists and navigate between them seamlessly.
