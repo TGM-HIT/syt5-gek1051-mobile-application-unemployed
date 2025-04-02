@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link";
 import { syncDatabase } from "@/lib/db";
 
+
 function ModeToggle() {
     const { setTheme } = useTheme()
 
@@ -51,7 +52,6 @@ function ModeToggle() {
         </DropdownMenu>
     )
 }
-
 
 export function SyncDialog() {
     const [url, setUrl] = useState("");

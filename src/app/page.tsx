@@ -59,7 +59,6 @@ export default function ShoppingList() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
-
             <div className="flex flex-col">
                 <div className="flex flex-row flex-wrap space-x-4 space-y-4 p-4">
                     {filteredLists.map((list) => (
