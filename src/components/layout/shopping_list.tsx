@@ -24,7 +24,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Address as AddressDetails, List } from "@/types/shoppinglist"
 import { generatePdf } from '@/lib/pdf';
-import { addList, deleteList, updateList } from '@/lib/sync';
+import { addList, deleteList, updateList } from '@/lib/list_db';
+import { Switch } from '../ui/switch';
 
 export function ShoppingListButton({ list }: { list: List }) {
     const [showInfo, setShowInfo] = useState(false);
@@ -125,6 +126,7 @@ interface Address {
 export function NewShoppingListButton() {
     const [dialogOpen, setDialogOpen] = useState(false)
 
+    const [isTemplate, setIsTemplate] = useState(false)
     const [name, setName] = useState<string>('');
     const [description, setDescription] = useState<string>('');
     const [addressQuery, setAddressQuery] = useState<string>('');
@@ -216,8 +218,8 @@ export function NewShoppingListButton() {
                     <Input id="description" placeholder='Foods with a load of protein' required value={description} onChange={(e) => setDescription(e.target.value)} />
                     <Label htmlFor="addressQuery">Search Address</Label>
                     <div className="relative">
-                        <Input id="addressQuery" placeholder="Search Address" value={addressQuery} onChange={handleQueryChange} />
-                        {suggestions.length > 0 && (
+                        <Input disabled={isTemplate} id="addressQuery" placeholder="Search Address" value={addressQuery} onChange={handleQueryChange} />
+                        {!isTemplate && suggestions.length > 0 && (
                             <ul className="absolute bg-popover text-foreground border w-full mt-1 rounded-md shadow-md max-h-40 overflow-auto z-10">
                                 {suggestions.map((s, index) => (
                                     <li key={index} className="p-2 hover:bg-secondary cursor-pointer" onClick={() => handleAddressSelect(s)}>
@@ -228,19 +230,22 @@ export function NewShoppingListButton() {
                         )}
                     </div>
                     <Label htmlFor="country">Country</Label>
-                    <Input id="country" placeholder="Austria" value={country} onChange={(e) => setCountry(e.target.value)} />
+                    <Input disabled={isTemplate} id="country" placeholder="Austria" value={country} onChange={(e) => setCountry(e.target.value)} />
                     <Label htmlFor="city">City</Label>
-                    <Input id="city" placeholder="Vienna" value={city} onChange={(e) => setCity(e.target.value)} />
+                    <Input disabled={isTemplate} id="city" placeholder="Vienna" value={city} onChange={(e) => setCity(e.target.value)} />
                     <Label htmlFor="street">Street Address</Label>
-                    <Input id="street" placeholder="Wexstraße 29" value={street} onChange={(e) => setStreet(e.target.value)} />
+                    <Input disabled={isTemplate} id="street" placeholder="Wexstraße 29" value={street} onChange={(e) => setStreet(e.target.value)} />
                     <Label htmlFor="postcode">Postal Code</Label>
-                    <Input id="postcode" placeholder="1200" value={postcode} onChange={(e) => setPostcode(e.target.value)} />
+                    <Input disabled={isTemplate} id="postcode" placeholder="1200" value={postcode} onChange={(e) => setPostcode(e.target.value)} />
                 </div>
-                <DialogFooter className='flex flex-row grow'>
+                <DialogFooter className='flex flex-row grow items-center'>
+                    <Label htmlFor="template">Is a template</Label>
+                    <Switch id='template' checked={isTemplate} onCheckedChange={(e) => setIsTemplate(e)} />
+                    <div className='flex-1' />
                     <Button onClick={clearFields} variant={'outline'}>Clear</Button>
                     <Button type="submit" onClick={(event) => {
                         event.preventDefault()
-                        addList(name, description, { country, city, street, postcode })
+                        addList(name, description, { country, city, street, postcode }, isTemplate)
                         setDialogOpen(false)
                     }}>Add</Button>
                 </DialogFooter>

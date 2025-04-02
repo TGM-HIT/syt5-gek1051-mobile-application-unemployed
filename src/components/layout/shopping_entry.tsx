@@ -6,13 +6,45 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Pencil, Pin, PinOff, ArrowUp, ArrowDown, Plus, Trash } from "lucide-react"
+import { Pencil, Pin, PinOff, ArrowUp, ArrowDown, Plus, Trash, Upload } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select"
-import { ShoppingListEntry } from "@/types/shoppinglist"
-import { addOrUpdateEntry, deleteEntry } from "@/lib/sync";
+import { List, ListEntry } from "@/types/shoppinglist"
+import { addEntriesBulk, addOrUpdateListEntry, deleteListEntry, getListEntries, getTemplates } from "@/lib/list_db";
 
-export const AddItemModal = ({ onSave }: { onSave: (item: ShoppingListEntry) => void }) => {
+export function LoadTemplateModal({ list }: { list: List }) {
+    const [templates, setTemplates] = useState<List[]>([]);
+
+    useEffect(() => {
+        getTemplates().then(setTemplates);
+    }, [setTemplates]);
+
+    const loadTemplate = async (templateId: string) => {
+        if (!list) return;
+        const entries = await getListEntries(templateId);
+        addEntriesBulk(list._id, entries)
+    };
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button>
+                    <Upload className="w-4 h-4 mr-2" /> Use template
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogTitle>Select a Template</DialogTitle>
+                {templates.map(template => (
+                    <Button variant={'secondary'} className={'justify-start'} key={`template-item-${template._id}`} onClick={() => loadTemplate(template._id)}>
+                        {template.name} - {template.description}
+                    </Button>
+                ))}
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+export const AddItemModal = ({ onSave }: { onSave: (item: ListEntry) => void }) => {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [category, setCategory] = useState("");
@@ -60,7 +92,7 @@ export const AddItemModal = ({ onSave }: { onSave: (item: ShoppingListEntry) => 
     );
 }
 
-const DeleteItemModal = ({ listId, item, open, setOpen }: { listId: string, item: ShoppingListEntry, open: boolean, setOpen: (open: boolean) => void }) => {
+const DeleteItemModal = ({ listId, item, open, setOpen }: { listId: string, item: ListEntry, open: boolean, setOpen: (open: boolean) => void }) => {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent>
@@ -75,7 +107,7 @@ const DeleteItemModal = ({ listId, item, open, setOpen }: { listId: string, item
                         setOpen(false)
                     }}>Cancel</Button>
                     <Button onClick={async () => {
-                        deleteEntry(listId, item.id)
+                        deleteListEntry(listId, item.id)
                         setOpen(false)
                     }}>Delete</Button>
                 </DialogFooter>
@@ -84,7 +116,7 @@ const DeleteItemModal = ({ listId, item, open, setOpen }: { listId: string, item
     )
 }
 
-const EditItemModal = ({ listId, item, open, setOpen }: { listId: string, item: ShoppingListEntry, open: boolean, setOpen: (open: boolean) => void }) => {
+const EditItemModal = ({ listId, item, open, setOpen }: { listId: string, item: ListEntry, open: boolean, setOpen: (open: boolean) => void }) => {
     const [name, setName] = useState(item?.name || "")
     const [description, setDescription] = useState(item?.description || "")
     const [category, setCategory] = useState(item?.category || "")
@@ -123,7 +155,7 @@ const EditItemModal = ({ listId, item, open, setOpen }: { listId: string, item: 
                 <Input type="number" id="amount" value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
 
                 <Button
-                    onClick={() => item ? addOrUpdateEntry(listId, {
+                    onClick={() => item ? addOrUpdateListEntry(listId, {
                         ...item,
                         name,
                         description,
@@ -143,8 +175,8 @@ const EditItemModal = ({ listId, item, open, setOpen }: { listId: string, item: 
 export const FilterAndSort = ({ filterChecked, setFilterChecked, sortBy, changeSort }: {
     filterChecked: "all" | "checked" | "unchecked",
     setFilterChecked: (value: "all" | "checked" | "unchecked") => void,
-    sortBy: { key: keyof ShoppingListEntry | null; order: "asc" | "desc" | null },
-    changeSort: (key: keyof ShoppingListEntry) => void
+    sortBy: { key: keyof ListEntry | null; order: "asc" | "desc" | null },
+    changeSort: (key: keyof ListEntry) => void
 
 }) => (
     <div className="flex justify-between items-center">
@@ -158,7 +190,7 @@ export const FilterAndSort = ({ filterChecked, setFilterChecked, sortBy, changeS
         </Select>
         <div className="flex gap-2">
             {["name", "category", "editor"].map((key) => (
-                <Button key={`sort-dropdown-item-${key}`} variant={sortBy.key === key ? "default" : "outline"} onClick={() => changeSort(key as keyof ShoppingListEntry)}>
+                <Button key={`sort-dropdown-item-${key}`} variant={sortBy.key === key ? "default" : "outline"} onClick={() => changeSort(key as keyof ListEntry)}>
                     {key.charAt(0).toUpperCase() + key.slice(1)}
                     {sortBy.key === key && (sortBy.order === "asc" ? <ArrowUp className="w-4 h-4 ml-2" /> : <ArrowDown className="w-4 h-4 ml-2" />)}
                 </Button>
@@ -167,24 +199,27 @@ export const FilterAndSort = ({ filterChecked, setFilterChecked, sortBy, changeS
     </div >
 )
 
-export const ShoppingItem = ({ listId, item }: {
+export const ShoppingItem = ({ listId, item, template = false }: {
     listId: string;
-    item: ShoppingListEntry;
+    item: ListEntry;
+    template?: boolean
 }) => {
     const [editModalOpen, setEditModalOpen] = useState(false)
     const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-    const edit = (updatedItem: ShoppingListEntry) => { if (listId) addOrUpdateEntry(listId, updatedItem) }
+    const edit = (updatedItem: ListEntry) => { if (listId) addOrUpdateListEntry(listId, updatedItem) }
 
     return (
         <Card key={item.id} className="p-3 mb-2 flex-row items-center justify-between">
             <div className="flex items-center gap-4 w-full">
-                <Checkbox
-                    checked={item.checked}
-                    onCheckedChange={() => {
-                        edit({ ...item, checked: !item.checked })
-                    }}
-                    className="w-6 h-6"
-                />
+                {!template &&
+                    <Checkbox
+                        checked={item.checked}
+                        onCheckedChange={() => {
+                            edit({ ...item, checked: !item.checked })
+                        }}
+                        className="w-6 h-6"
+                    />
+                }
                 <div className="flex flex-col w-full text-left">
                     <h3 className="text-lg font-semibold">{item.name || (<i>No name</i>)} ({item.amount} pcs)</h3>
                     <p className="text-md text-muted-foreground">{item.description}</p>
@@ -197,11 +232,11 @@ export const ShoppingItem = ({ listId, item }: {
             </div>
 
             <div className="flex flex-col gap-2 items-center">
-                <Button variant="ghost" size="icon" onClick={() => {
+                {!template && <Button variant="ghost" size="icon" onClick={() => {
                     edit({ ...item, pinned: !item.pinned })
                 }}>
                     {item.pinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
-                </Button>
+                </Button>}
                 <Button variant="ghost" size="icon" onClick={() => setEditModalOpen(true)}>
                     <Pencil className="w-4 h-4" />
                 </Button>

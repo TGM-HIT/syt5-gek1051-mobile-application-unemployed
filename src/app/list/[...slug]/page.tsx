@@ -1,40 +1,41 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select"
-import { ShoppingListEntry } from "@/types/shoppinglist"
-import { AddItemModal, FilterAndSort, ShoppingItem } from "@/components/layout/shopping_entry"
-import { addOrUpdateEntry, getEntries, listenForChanges } from "@/lib/sync"
+import { List, ListEntry } from "@/types/shoppinglist"
+import { AddItemModal, FilterAndSort, LoadTemplateModal, ShoppingItem } from "@/components/layout/shopping_entry"
+import { addOrUpdateListEntry, getList, getListEntries } from "@/lib/list_db"
 import { Separator } from "@/components/ui/separator"
+import { listenForChanges } from "@/lib/db"
 
 export default function ShoppingList({ params }: { params: Promise<{ slug: string }> }) {
-    const listId = useRef<string | null>(null);
-    const [items, setItems] = useState<ShoppingListEntry[]>([])
-
-    const fetch = () => {
-        if (listId.current) getEntries(listId.current).then((e) => setItems(e))
-    }
+    const [items, setItems] = useState<ListEntry[]>([])
+    const [list, setList] = useState<List | null>(null)
 
     useEffect(() => {
         params.then((e) => {
-            listId.current = e.slug[0]
-            fetch()
+            getList(e.slug[0]).then((e) => {
+                if (e) {
+                    setList(e)
+                    getListEntries(e._id).then((f) => setItems(f))
+                }
+            })
         })
-    }, [params, listId])
+    }, [params, setList])
 
     useEffect(() => {
         listenForChanges(() => {
-            fetch()
+            if (list) getListEntries(list._id).then((e) => setItems(e))
         });
-    }, [listId, setItems])
+    }, [list, setItems])
 
-    const [sortBy, setSortBy] = useState<{ key: keyof ShoppingListEntry | null; order: "asc" | "desc" | null }>({ key: null, order: null })
+    const [sortBy, setSortBy] = useState<{ key: keyof ListEntry | null; order: "asc" | "desc" | null }>({ key: null, order: null })
     const [filterChecked, setFilterChecked] = useState<"all" | "checked" | "unchecked">("all")
     const [searchQuery, setSearchQuery] = useState("")
-    const [searchKey, setSearchKey] = useState<keyof ShoppingListEntry>("name")
+    const [searchKey, setSearchKey] = useState<keyof ListEntry>("name")
 
-    function changeSort(key: keyof ShoppingListEntry) {
+    function changeSort(key: keyof ListEntry) {
         setSortBy((prev) => {
             if (prev.key === key) {
                 if (prev.order === "asc") return { key, order: "desc" }
@@ -44,8 +45,8 @@ export default function ShoppingList({ params }: { params: Promise<{ slug: strin
         })
     }
 
-    function handleEdit(item: ShoppingListEntry) {
-        if (listId.current) addOrUpdateEntry(listId.current, item)
+    function handleEdit(item: ListEntry) {
+        if (list) addOrUpdateListEntry(list._id, item)
     }
 
     const filteredItems = items.filter((item) =>
@@ -73,7 +74,7 @@ export default function ShoppingList({ params }: { params: Promise<{ slug: strin
     return (
         <div className="w-full mx-auto p-4 space-y-4">
             <div className="flex gap-2">
-                <Select onValueChange={(value) => setSearchKey(value as keyof ShoppingListEntry)}>
+                <Select onValueChange={(value) => setSearchKey(value as keyof ListEntry)}>
                     <SelectTrigger>{searchKey.charAt(0).toUpperCase() + searchKey.slice(1)}</SelectTrigger>
                     <SelectContent>
                         <SelectItem value="name">Name</SelectItem>
@@ -90,15 +91,16 @@ export default function ShoppingList({ params }: { params: Promise<{ slug: strin
                 <AddItemModal onSave={(item) => {
                     handleEdit(item)
                 }} />
+                {list && <LoadTemplateModal list={list} />}
             </div>
             <FilterAndSort filterChecked={filterChecked} setFilterChecked={setFilterChecked} sortBy={sortBy} changeSort={changeSort} />
             <div>
                 {pinnedItems.map((item) => (
-                    <ShoppingItem key={item.id} listId={listId.current || ''} item={item} />
+                    <ShoppingItem key={item.id} listId={list?._id || ''} item={item} />
                 ))}
                 <Separator />
                 {unpinnedItems.map((item) => (
-                    <ShoppingItem key={item.id} listId={listId.current || ''} item={item} />
+                    <ShoppingItem template={list?.type == "template"} key={item.id} listId={list?._id || ''} item={item} />
                 ))}
             </div>
         </div>

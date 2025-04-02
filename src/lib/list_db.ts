@@ -1,9 +1,7 @@
 "use client"
 
-import { Address, BaseType, List, ShoppingListEntry } from '@/types/shoppinglist';
-import PouchDB from 'pouchdb-browser';
-
-export const localDB = new PouchDB('shopping_lists');
+import { Address, BaseType, List, ListEntry } from '@/types/shoppinglist';
+import { localDB } from './db';
 
 export async function getLists(): Promise<List[]> {
     try {
@@ -16,14 +14,36 @@ export async function getLists(): Promise<List[]> {
     }
 }
 
+export async function getTemplates(): Promise<List[]> {
+    try {
+        const result = await localDB.allDocs<BaseType>({ include_docs: true });
+        const lists = result.rows.map(row => row.doc).filter(doc => doc && doc.type === "template");
+        return lists as unknown as List[]
+    } catch (error) {
+        console.error('Error fetching templates:', error);
+        return []
+    }
+}
+
+export async function getList(listId: string): Promise<List | null> {
+    try {
+        const list: List = await localDB.get(listId)
+        return list
+    } catch (error) {
+        console.error('Error fetching list:', error);
+        return null
+    }
+}
+
 export async function addList(name: string,
     description: string,
-    address: Address
+    address: Address,
+    isTemplate: boolean = false
 ): Promise<void> {
     try {
         await localDB.put({
             _id: crypto.randomUUID(),
-            type: 'list',
+            type: isTemplate ? 'template' : 'list',
             name,
             description,
             address,
@@ -36,8 +56,7 @@ export async function addList(name: string,
 
 export async function updateList(list: List): Promise<void> {
     try {
-        const existing = await localDB.get(list._id);
-        await localDB.put({ ...existing, ...list, updatedAt: new Date() });
+        await localDB.put(list);
     } catch (error) {
         console.error('Error updating list:', error);
     }
@@ -52,7 +71,7 @@ export async function deleteList(id: string): Promise<void> {
     }
 }
 
-export async function getEntries(listId: string): Promise<ShoppingListEntry[]> {
+export async function getListEntries(listId: string): Promise<ListEntry[]> {
     try {
         const list: List = await localDB.get(listId)
         return Object.keys(list.entries).map((e) => {
@@ -68,7 +87,7 @@ export async function getEntries(listId: string): Promise<ShoppingListEntry[]> {
     }
 }
 
-export async function addOrUpdateEntry(listId: string, entry: ShoppingListEntry): Promise<void> {
+export async function addOrUpdateListEntry(listId: string, entry: ListEntry): Promise<void> {
     try {
         const list: List = await localDB.get(listId);
         list.entries[entry.id] = entry
@@ -78,7 +97,17 @@ export async function addOrUpdateEntry(listId: string, entry: ShoppingListEntry)
     }
 }
 
-export async function deleteEntry(listId: string, entryId: string): Promise<void> {
+export async function addEntriesBulk(listId: string, entries: ListEntry[]): Promise<void> {
+    try {
+        const list: List = await localDB.get(listId);
+        entries.forEach((e) => list.entries[e.id] = e)
+        await localDB.put(list);
+    } catch (error) {
+        console.error('Error adding entry:', error);
+    }
+}
+
+export async function deleteListEntry(listId: string, entryId: string): Promise<void> {
     try {
         const list: List = await localDB.get(listId);
         delete list.entries[entryId]
@@ -87,30 +116,3 @@ export async function deleteEntry(listId: string, entryId: string): Promise<void
         console.error('Error deleting entry:', error);
     }
 }
-
-export function syncDatabase(remoteURL: string, auth?: { username: string, password: string }) {
-    const remoteDB = new PouchDB(remoteURL, {
-        auth
-    });
-    localDB.sync(remoteDB, { live: true, retry: true })
-        .on('change', (info) => console.log('Sync Change:', info))
-        .on('paused', (err) => console.log('Sync Paused:', err))
-        .on('active', () => console.log('Sync Active'))
-        .on('denied', (err) => console.error('Sync Denied:', err))
-        .on('complete', (info) => console.log('Sync Complete:', info))
-        .on('error', (err) => console.error('Sync Error:', err));
-}
-
-// Listen for real-time changes and update UI
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function listenForChanges(updateUI: (data: any) => void) {
-    localDB.changes({
-        since: 'now',
-        live: true,
-        include_docs: true
-    }).on('change', (change) => {
-        console.log('Database Change:', change);
-        updateUI(change.doc);
-    }).on('error', (err) => console.error('Change Listener Error:', err));
-}
-

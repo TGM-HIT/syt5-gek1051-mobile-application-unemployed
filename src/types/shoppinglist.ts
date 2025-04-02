@@ -10,7 +10,7 @@ export interface Address {
     postcode?: string;
 }
 
-export interface ShoppingListEntry {
+export interface ListEntry {
     id: string
     name: string
     description: string
@@ -23,13 +23,11 @@ export interface ShoppingListEntry {
     pinned: boolean
 }
 
-interface Map {
-    [id: string]: ShoppingListEntry
-}
-
 export interface List extends BaseType {
     name: string
     description: string
     address: Address
-    entries: Map
+    entries: {
+        [id: string]: ListEntry
+    }
 }
