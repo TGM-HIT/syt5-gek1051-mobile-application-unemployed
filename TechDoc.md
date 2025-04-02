@@ -61,6 +61,74 @@ Refer to the [tutorial](https://github.com/ibm-watson-data-lab/shopping-list-vue
 
 To see this app in action without installing anything, simply visit [https://ibm-watson-data-lab.github.io/shopping-list-vuejs-pouchdb](https://ibm-watson-data-lab.github.io/shopping-list-vuejs-pouchdb/) in a web browser or on your mobile device.
 
+
+# **Development Environment Setup**  
+
+## ** Development Tools**  
+### **Integrated Development Environment (IDE)**  
+The project was developed using **Visual Studio Code (VS Code)**. This IDE was chosen for its extensive support for JavaScript, React, and Jest, as well as its built-in Git integration and debugging tools.  
+
+#### **Extensions Used:**  
+- **ESLint** – Ensures code quality and consistency  
+- **Jest Runner** – Allows running Jest tests directly within the IDE  
+- **Prettier** – Auto-formats code for readability  
+
+
+## **Software Development Tools**  
+### **Version Control**  
+- **Git** was used for version control, with a remote repository hosted on **GitHub**.  
+- The project followed a structured workflow using branches and pull requests to manage changes efficiently.  
+
+### **Dependency Management**  
+- The project was built using **Node.js (v18.16.0)** with **npm (v9.5.0)**.  
+- Dependencies were installed using:  
+  ```bash
+  npm install
+  ```  
+
+## **Testing Tools**  
+### **Jest – Unit Testing**  
+- **Jest** was used for testing, providing unit tests and snapshot tests for React components.  
+- Test files are stored in the `__tests__` directory and follow the `.test.tsx` naming convention.  
+- Tests can be executed with:  
+  ```bash
+  npm test
+  ```  
+- Code coverage reports can be generated with:  
+  ```bash
+  jest --coverage
+  ```  
+
+### **Mocking & Snapshot Testing**  
+- Jest’s mocking capabilities were utilized to test API calls and simulate dependencies.  
+- Snapshot testing was used to ensure UI consistency.
+
+### Example Tests
+A Documentation of implemented Tests can be found [here](https://github.com/TGM-HIT/syt5-gek1051-mobile-application-unemployed/tree/main/doc).
+
+## **Deployment**  
+The application is deployed using **Docker** to ensure a consistent environment across different machines.  
+
+### **Deployment Process**  
+1. **Build the Docker image:**  
+   ```bash
+   docker build -t my-app .  
+   ```  
+2. **Run the container:**  
+   ```bash
+   docker run -p 3000:3000 my-app  
+   ```  
+3. If using **Docker Compose**, deployment can be done with:  
+   ```bash
+   docker-compose up -d  
+   ```  
+
+### **Ensuring Cross-System Compatibility**  
+- The use of **Docker** prevents the *"It works on my machine"* issue by containerizing the application.  
+- The environment is defined in a `Dockerfile` and, if needed, a `docker-compose.yml` file.  
+- Configuration variables are managed using environment files (`.env`).  
+
+
 # Steps
 
 Want to check out the end product on your own machine? Follow these steps to deploy your own instance of the shopping list app.
