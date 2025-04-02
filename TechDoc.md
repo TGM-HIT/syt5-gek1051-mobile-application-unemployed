@@ -94,7 +94,8 @@ The project was developed using **Typescript Language Server**. This tool was ch
 - Snapshot testing was used to ensure UI consistency.
 
 ### Example Tests
-A Documentation of implemented Tests can be found [here](https://github.com/TGM-HIT/syt5-gek1051-mobile-application-unemployed/tree/main/doc).
+* The implemented tests can be found [here](https://github.com/TGM-HIT/syt5-gek1051-mobile-application-unemployed/tree/tests/src/test).
+* A Documentation of implemented Tests can be found [here](https://github.com/TGM-HIT/syt5-gek1051-mobile-application-unemployed/blob/main/doc/ID3_MH_Offline.md).
 
 
 ## **Deployment**  
