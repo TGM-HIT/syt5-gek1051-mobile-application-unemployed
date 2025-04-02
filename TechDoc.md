@@ -1,24 +1,15 @@
-[![Build Status](https://travis-ci.org/ibm-watson-data-lab/shopping-list-vuejs-pouchdb.svg?branch=master)](https://travis-ci.org/ibm-watson-data-lab/shopping-list-vuejs-pouchdb)
-![IBM Cloud Deployments](https://metrics-tracker.mybluemix.net/stats/4b4ca7dd406587d30b91b8ecff5eaf6b/badge.svg)
+# Introduction
 
-# Create an Offline First Shopping List with Vue.js and PouchDB
+This project is a modern, offline-first shopping list application developed using *Next.js, **CouchDB, and **TypeScript*. It replaces the legacy Vue 2 + PouchDB stack with a more scalable and performant React-based architecture.
 
-This code pattern is a reference implementation of an Offline First shopping list app, built as a [Progressive Web App](https://developers.google.com/web/progressive-web-apps/) using [Vue.js](https://vuejs.org/) and [PouchDB](https://pouchdb.com/). [This app is part of a series of Offline First demo apps, each built using a different stack.](https://github.com/ibm-watson-data-lab/shopping-list)
-
-When the reader has completed this Code Pattern and explored the code in this GitHub repository, they will understand how to:
-
-- create a shopping list web application that stores its data in a local PouchDB database.
-- turn the web application into a Progressive Web App that works with or without an internet connection.
-- make the app sync to and from a remote Cloudant database.
-
-![](doc/source/images/architecture.png)
+The app supports offline usage, multi-device synchronization, and a modular design using Radix-based Shadcn UI components. Deployment is managed via *Vercel*, providing a fast CI/CD pipeline and zero-config hosting.
 
 ## Flow
 
 1. Browser loads Progressive Web App's resources from the web server. 
 2. User interacts with the web app to add shopping lists and list items. 
 3. Data is stored locally in PouchDB.
-4. PouchDB syncs its data with a remote IBM Cloudant database.
+4. PouchDB syncs its data with a remote database.
 
 
 ## Included components
@@ -27,31 +18,39 @@ When the reader has completed this Code Pattern and explored the code in this Gi
 
 ## Featured technologies
 
-* [PouchDB](https://pouchdb.com/) - an in-browser database that can replicate to and from a remote Apache CouchDB or IBM Cloudant database.
-* [Next.js](https://nextjs.org/) - The React Framework for the Web.
-* [Apache CouchDB](http://couchdb.apache.org/) - modern, document database hosted on your server or in the cloud.
+| Layer      | Tech                     |
+| ---------- | ------------------------ |
+| Frontend   | Next.js (App Router, TS) |
+| Backend    | API Routes in Next.js    |
+| Database   | Apache CouchDB           |
+| Styling    | Tailwind CSS + Shadcn UI |
+| Testing    | Jest, Testing Library    |
+| Deployment | Vercel                   |
 
 ## Key concepts
 
-This shopping list app is a small single page web application consisting of an HTML file, a couple of CSS files, and a single JavaScript file, the Next.js framework, and the PouchDB library. The web page will allow multiple shopping lists to be created (e.g., Groceries, Clothes, etc.) each with a number of shopping list items associated with them (e.g., Bread, Water, etc.).
+### Offline First Architecture
 
-So what sets this app apart? Its Offline First architecture. The Offline First approach plans for the most constrained network environment first, enabling a great user experience even while the device is offline or has only an intermittent connection, and providing progressive enhancement as network conditions improve. This design also makes the app incredibly performant (fast!) on the best of networks. 
+- Local state management with syncing to CouchDB
+- Lists and items persist offline and update when reconnected
+- Changes are versioned using revision-based syncing
 
-PouchDB, CouchDB, and Service Worker are the primary tools that turn our simple shopping list app into a high performance, offline-capable Progressive Web App.
+### Server Sync
 
-**Data stays safe on your device, even while it's offline.**
-Persistence of shopping lists and item data entered by the user is achieved using the in-browser database PouchDB. This will allow your data to survive between sessions and when disconnected from the network. (Whether you remember that you need juice while you're on your trusty home Wi-Fi or in the middle of the wilderness, you can still add it your list.)
+- CouchDB sync is triggered via listenForChanges()
+- Live replication ensures updates are available across devices
+- Offline status is tracked and reflected in the UI
 
-**Data syncs between devices when a connection is available.**
-When a connection is available, the data is synced from the local device to a CouchDB database in the cloud, and can thus be shared across multiple devices or users. (Need to share your grocery list with your roommate or access it on both your phone and your laptop? No problem!)
+### Soft Deletion
 
-**The app loads quickly, even while offline.**
-To keep the app itself functional while offline, a [Service Worker](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers) is used to cache page resources (the most important HTML, CSS, and JavaScript files) when the web application is first visited. Each device must have a connection for this first visit, after which the app will be fully functional even while offline or in shoddy network conditions. (No more error messages or frustratingly slow page loads.)
+- Items and lists are marked with deleted: true
+- They remain in the DB for syncing and recovery
 
-**The app can be installed on a mobile device.**
-In combination with the Service Worker used for caching, a [manifest file]((https://w3c.github.io/manifest/)) containing metadata allows the app to become a Progressive Web App, an enhanced website that can be installed on a mobile device and can then be used with or without an internet connection. (It's secretly still a website, but you can access it through one of those handy dandy little app icons on your homescreen!)
+### UI Architecture
 
-Explore the code in this GitHub repository to see how the Offline First design is applied.
+- All components use *Shadcn UI* (Radix + Tailwind)
+- Highly customizable and accessible
+- Responsive mobile-first layout
 
 # Tutorial
 
