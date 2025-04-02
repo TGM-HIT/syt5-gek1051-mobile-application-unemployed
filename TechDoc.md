@@ -214,20 +214,19 @@ Jest is a JavaScript testing framework designed for simplicity and efficiency. I
 - [Jest Official Documentation](https://jestjs.io/docs/getting-started)
 
 
-# **Datastore and Data Synchronization**
+# Datastore
 
-The datastore is built on a **document-based NoSQL database** using **CouchDB**, which provides built-in synchronization and replication capabilities. This ensures that data remains consistent across multiple clients, even in distributed environments.
+The datastore consists of two main schemas: the Shopping List Schema and the List Item Schema. These schemas define the structure for storing shopping lists and their corresponding items in a document-based NoSQL database.
 
-## **Data Storage and Synchronization**
+## Data Storage and Synchronization
 
-The database employs a **soft deletion strategy** instead of permanently removing documents. When a shopping list or an item is deleted, it is not erased from the database but instead marked with a `"deleted": true` flag. This strategy is used because:
+The database uses **PouchDB** for local storage and **CouchDB** as the remote database, enabling real-time bidirectional synchronization. To prevent permanent data loss, a **soft deletion** strategy is used: instead of removing documents, they are marked with a `deleted: true` flag. This approach ensures:
 
-- **Data Integrity** – Ensures that all deletions are properly synchronized across instances.
-- **Historical Tracking** – Deleted items remain available for reference and can be restored if necessary.
-- **Replication Safety** – Prevents data inconsistencies that may arise during multi-master replication.
-- **Conflict Handling** – CouchDB’s conflict resolution mechanisms ensure that deleted records are propagated correctly without inconsistencies.
+- **Data integrity** by keeping a record of deleted items while maintaining sync consistency.
+- **Historical reference and recovery**, allowing deleted lists/items to be restored if necessary.
+- **Proper handling of replication**, preventing inconsistencies during sync operations.
 
-## **Shopping List Schema**
+### Shopping List Schema
 
 The Shopping List Schema represents a shopping list entity, including metadata and optional location details.
 
@@ -251,14 +250,15 @@ The Shopping List Schema represents a shopping list entity, including metadata a
 }
 ```
 
-### **What Happens When a Shopping List is Deleted?**
+### What Happens When a Shopping List is Deleted?
+
 - The `deleted` field is set to `true`, marking it as removed.
 - The `updatedAt` timestamp is updated to reflect the deletion.
-- The document remains in the database for synchronization and consistency.
-- Queries can exclude `deleted: true` documents to prevent them from being displayed.
-- The list can be restored by setting `deleted` back to `false`.
+- The document remains in the database to ensure consistency during synchronization.
+- Queries can exclude `deleted: true` documents to hide them from users.
+- If needed, the list can be restored by setting `deleted` back to `false`.
 
-## **List Item Schema**
+### List Item Schema
 
 The List Item Schema represents an individual item within a shopping list.
 
@@ -279,47 +279,105 @@ The List Item Schema represents an individual item within a shopping list.
 }
 ```
 
-### **What Happens When a List Item is Deleted?**
-- The `deleted` field is set to `true`.
+### What Happens When a List Item is Deleted?
+
+- The `deleted` field is set to `true`, preventing the item from appearing in regular queries.
 - The `updatedAt` timestamp is updated.
-- The document remains in the database to ensure consistency across replicas.
-- Queries exclude `deleted: true` items, so they do not appear in active lists.
-- Items can be restored by setting `deleted` to `false`.
+- The document remains in the database for data integrity and synchronization purposes.
+- Queries can exclude `deleted: true` items, so they are no longer visible in the app.
+- If needed, an item can be restored by resetting `deleted` to `false`.
 
-## **Why Use Soft Deletion Instead of Hard Deletion?**
+## Synchronization and Conflict Resolution
 
-- **Synchronization Integrity** – Ensures proper propagation of deletions across all replicas.
-- **Data Retention** – Prevents accidental data loss and allows recovery.
-- **Historical Tracking** – Maintains a history of deleted lists/items for auditing purposes.
-- **Performance Optimization** – Reduces potential conflicts and data inconsistencies in replicated environments.
+The synchronization process ensures that data remains consistent across multiple devices and instances. This is implemented using **PouchDB’s sync functionality** to communicate with a CouchDB remote instance.
 
-## **Synchronization Algorithm and Framework**
+### **Sync Logic**
 
-The datastore relies on **CouchDB’s multi-master replication model**, ensuring seamless data consistency across distributed systems. Key features include:
+The application establishes a **real-time, bidirectional sync** between local PouchDB storage and the remote CouchDB instance. This is achieved through the following steps:
 
-### **Multi-Master Replication**
-- Any node can receive updates, and changes are propagated across all replicas.
-- Ensures that data remains available even if one instance goes offline.
+1. **Initialization of Local Database**
+   ```javascript
+   import PouchDB from 'pouchdb-browser';
+   export const localDB = new PouchDB('shopping_lists');
+   ```
+   - A local PouchDB instance (`shopping_lists`) is created to store shopping lists and items.
 
-### **Optimistic Concurrency Control**
-- Each document maintains a **revision history**.
-- Changes are merged efficiently without locking mechanisms.
+2. **Synchronization with Remote Database**
+   ```javascript
+   export async function syncDatabase(remoteURL, auth) {
+       const remoteDB = new PouchDB(remoteURL, { auth });
+       try {
+           localDB.sync(remoteDB, { live: true, retry: true })
+               .on('change', async (info) => {
+                   if (info.direction === 'pull') {
+                       await handleConflicts(info.change.docs);
+                   }
+               })
+               .on('error', (err) => { throw err });
+       } catch (error) {
+           return error;
+       }
+   }
+   ```
+   - The sync process is **live and retry-enabled**, ensuring continuous updates.
+   - If a change is pulled from the remote database, potential **conflicts are handled automatically**.
 
-### **Conflict Resolution**
-- If conflicting changes occur, CouchDB stores all conflicting versions.
-- Application logic determines the correct version.
+3. **Conflict Resolution**
+   ```javascript
+   async function handleConflicts(docs) {
+       for (const doc of docs) {
+           if (doc._conflicts && doc._conflicts.length > 0) {
+               await resolveConflict(doc);
+           }
+       }
+   }
 
-### **Incremental Updates**
-- Only changed documents are replicated.
-- Reduces bandwidth and improves performance.
+   async function resolveConflict(doc) {
+       try {
+           const conflictedDoc = await localDB.get(doc._id, { conflicts: true });
+           const deletePromises = conflictedDoc._conflicts.map((rev) =>
+               localDB.remove(conflictedDoc._id, rev)
+           );
+           await Promise.all(deletePromises);
+       } catch (err) {
+           console.error('Error resolving conflict:', err);
+       }
+   }
+   ```
+   - **Conflicts are checked and resolved** by keeping only the latest revision.
+   - Older conflicting revisions are removed from the local database.
 
-### **Offline-First Support**
-- Devices can sync when reconnected, ensuring continuous data availability.
+4. **Listening for Changes**
+   ```javascript
+   export function listenForChanges(updateUI) {
+       localDB.changes({
+           since: 'now',
+           live: true,
+           include_docs: true
+       }).on('change', (change) => {
+           updateUI(change.doc);
+       });
+   }
+   ```
+   - The app listens for database changes and updates the UI accordingly.
 
-## **Related Documentation:**
-- [CouchDB API Documentation](https://docs.couchdb.org/en/stable/api/index.html)
-- [CouchDB Replication](https://docs.couchdb.org/en/stable/replication/index.html)
+### **Why This Synchronization Approach?**
+
+- **Multi-master replication**: Updates can be made on any instance, and changes propagate across all replicas.
+- **Optimistic concurrency control**: Each document maintains a revision history.
+- **Conflict resolution strategy**: Ensures data consistency across devices.
+- **Incremental updates**: Only changed documents are replicated, reducing bandwidth usage.
+- **Offline-first support**: Devices can sync when reconnected, ensuring data availability.
+
+This synchronization method ensures seamless data consistency across distributed systems, making it ideal for collaborative shopping lists.
+
+### **Related Documentation:**
+
+- [PouchDB API Documentation](https://pouchdb.com/api.html)
+- [CouchDB Replication](https://docs.couchdb.org/en/stable/replication.html)
 - [CouchDB Conflict Resolution](https://docs.couchdb.org/en/stable/replication/conflicts.html)
+
+
 
 
 # Development Setup
