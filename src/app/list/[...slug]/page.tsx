@@ -91,6 +91,7 @@ export default function ShoppingList({ params }: { params: Promise<{ slug: strin
                 <AddItemModal onSave={(item) => {
                     handleEdit(item)
                 }} />
+                {list && <LoadTemplateModal list={list} />}
             </div>
             <FilterAndSort filterChecked={filterChecked} setFilterChecked={setFilterChecked} sortBy={sortBy} changeSort={changeSort} />
             <div>

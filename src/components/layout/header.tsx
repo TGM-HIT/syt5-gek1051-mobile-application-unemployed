@@ -2,6 +2,7 @@
 
 import { Input } from "../ui/input";
 import * as React from "react"
+import { useState } from "react";
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
@@ -22,6 +23,8 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import Link from "next/link";
+import { syncDatabase } from "@/lib/db";
+
 
 function ModeToggle() {
     const { setTheme } = useTheme()
@@ -51,6 +54,14 @@ function ModeToggle() {
 }
 
 export function SyncDialog() {
+    const [url, setUrl] = useState("");
+    const [password, setPassword] = useState("");
+    const [buttonVariant, setButtonVariant] = useState<"default" | "outline" | "destructive">("default");
+
+    const handleSync = async () => {
+        await syncDatabase(url, { username: "admin", password }).then(() => setButtonVariant("default")).catch(() => setButtonVariant("destructive"));
+    };
+
     return (
         <Dialog>
             <DialogTrigger asChild>
@@ -68,21 +79,21 @@ export function SyncDialog() {
                         <Label htmlFor="url" className="text-right">
                             URL
                         </Label>
-                        <Input id="url" placeholder="http://localhost:1234/db" className="col-span-3" />
+                        <Input id="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="http://localhost:1234/db" className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="password" className="text-right">
                             Password
                         </Label>
-                        <Input id="password" type="password" className="col-span-3" />
+                        <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="col-span-3" />
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button type="submit">Synchronize</Button>
+                    <Button onClick={handleSync} variant={buttonVariant}>Synchronize</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-    )
+    );
 }
 
 export function Header() {

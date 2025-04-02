@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useState } from 'react';
 import { Address as AddressDetails, List } from "@/types/shoppinglist"
+import { generatePdf } from '@/lib/pdf';
 import { addList, deleteList, updateList } from '@/lib/list_db';
 import { Switch } from '../ui/switch';
 
@@ -53,7 +54,7 @@ export function ShoppingListButton({ list }: { list: List }) {
                             <DropdownMenuItem onClick={() => setShowInfo(true)}>Display info</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => { setIsEditing(true); setEditField('name'); setEditValue(list.name); }}>Edit name</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => { setIsEditing(true); setEditField('description'); setEditValue(list.description); }}>Edit description</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => {}}>Export PDF</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => generatePdf(list)}>Export PDF</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setShowDelete(true)}>Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
