@@ -114,3 +114,9 @@ export function listenForChanges(updateUI: (data: any) => void) {
     }).on('error', (err) => console.error('Change Listener Error:', err));
 }
 
+export function getSyncStatus(): boolean {
+    return navigator.onLine;
+  }
+  
+  
+
