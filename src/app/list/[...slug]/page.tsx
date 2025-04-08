@@ -44,6 +44,12 @@ export default function ShoppingList({ params }: { params: Promise<{ slug: strin
             }
 
             // Listen for real-time changes and update items accordingly
+
+        })
+    }, [params])
+
+    useEffect(() => {
+        getDBFunctions().then((dbFunctions) => {
             if (list) {
                 dbFunctions.listenForChanges(() => {
                     if (list) {
@@ -52,7 +58,7 @@ export default function ShoppingList({ params }: { params: Promise<{ slug: strin
                 })
             }
         })
-    }, [params, list])
+    }, [list])
 
     // Restore the original functionality for changing the sorting order
     const changeSort = (key: keyof ListEntry) => {
