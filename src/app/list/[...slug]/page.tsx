@@ -117,9 +117,9 @@ export default function ShoppingList({ params }: { params: Promise<{ slug: strin
 
     return (
         <div className="w-full mx-auto p-4 space-y-4">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2">
                 <Select onValueChange={(value) => changeSort(value as keyof ListEntry)}>
-                    <SelectTrigger>Name</SelectTrigger>
+                    <SelectTrigger className="w-full sm:w-auto">Name</SelectTrigger>
                     <SelectContent>
                         <SelectItem value="name">Name</SelectItem>
                         <SelectItem value="description">Description</SelectItem>
@@ -127,27 +127,39 @@ export default function ShoppingList({ params }: { params: Promise<{ slug: strin
                         <SelectItem value="editor">Editor</SelectItem>
                     </SelectContent>
                 </Select>
+
                 <Input
-                    placeholder={`Search by name`}
+                    className="w-full sm:flex-1"
+                    placeholder="Search by name"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <AddItemModal onSave={(item) => handleEdit(item)} />
-                {list && <LoadTemplateModal list={list} />}
+
+                <div className="flex gap-2 flex-col sm:flex-row w-full sm:w-auto">
+                    <AddItemModal onSave={(item) => handleEdit(item)} />
+                    {list && <LoadTemplateModal list={list} />}
+                </div>
             </div>
+
             <FilterAndSort
                 filterChecked={filterChecked}
                 setFilterChecked={setFilterChecked}
                 sortBy={sortBy}
                 changeSort={changeSort}
             />
+
             <div>
                 {pinnedItems.map((item) => (
                     <ShoppingItem key={item.id} listId={list?._id || ''} item={item} />
                 ))}
                 <Separator />
                 {unpinnedItems.map((item) => (
-                    <ShoppingItem template={list?.type === "template"} key={item.id} listId={list?._id || ''} item={item} />
+                    <ShoppingItem
+                        template={list?.type === "template"}
+                        key={item.id}
+                        listId={list?._id || ''}
+                        item={item}
+                    />
                 ))}
             </div>
         </div>

@@ -173,31 +173,46 @@ const EditItemModal = ({ listId, item, open, setOpen }: { listId: string, item: 
     )
 }
 
-export const FilterAndSort = ({ filterChecked, setFilterChecked, sortBy, changeSort }: {
+export const FilterAndSort = ({
+    filterChecked,
+    setFilterChecked,
+    sortBy,
+    changeSort,
+}: {
     filterChecked: "all" | "checked" | "unchecked",
     setFilterChecked: (value: "all" | "checked" | "unchecked") => void,
     sortBy: { key: keyof ListEntry | null; order: "asc" | "desc" | null },
     changeSort: (key: keyof ListEntry) => void
-
 }) => (
-    <div className="flex justify-between items-center">
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-2 w-full">
         <Select onValueChange={(value) => setFilterChecked(value as "all" | "checked" | "unchecked")}>
-            <SelectTrigger>Filter: {filterChecked}</SelectTrigger>
+            <SelectTrigger className="w-full sm:w-auto">Filter: {filterChecked}</SelectTrigger>
             <SelectContent>
                 <SelectItem value="all">All</SelectItem>
                 <SelectItem value="checked">Checked</SelectItem>
                 <SelectItem value="unchecked">Unchecked</SelectItem>
             </SelectContent>
         </Select>
-        <div className="flex gap-2">
+
+        <div className="flex flex-wrap justify-start sm:justify-end gap-2 w-full sm:w-auto">
             {["name", "category", "editor"].map((key) => (
-                <Button key={`sort-dropdown-item-${key}`} variant={sortBy.key === key ? "default" : "outline"} onClick={() => changeSort(key as keyof ListEntry)}>
+                <Button
+                    key={`sort-dropdown-item-${key}`}
+                    variant={sortBy.key === key ? "default" : "outline"}
+                    onClick={() => changeSort(key as keyof ListEntry)}
+                    className="w-full sm:w-auto"
+                >
                     {key.charAt(0).toUpperCase() + key.slice(1)}
-                    {sortBy.key === key && (sortBy.order === "asc" ? <ArrowUp className="w-4 h-4 ml-2" /> : <ArrowDown className="w-4 h-4 ml-2" />)}
+                    {sortBy.key === key &&
+                        (sortBy.order === "asc" ? (
+                            <ArrowUp className="w-4 h-4 ml-2" />
+                        ) : (
+                            <ArrowDown className="w-4 h-4 ml-2" />
+                        ))}
                 </Button>
             ))}
         </div>
-    </div >
+    </div>
 )
 
 export const ShoppingItem = ({ listId, item, template = false }: {
